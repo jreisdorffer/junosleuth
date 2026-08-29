@@ -53,7 +53,7 @@ Junosleuth is not:
 - a physical disk-imaging solution;
 - an atomic physical-memory acquisition framework.
 
-A negative JMRT result or absence of a known artifact must not be interpreted as proof that compromise did not occur.
+A negative Juniper Malware Removal Tool (JMRT) result or absence of a known artifact must not be interpreted as proof that compromise did not occur.
 
 Filesystem, shell, `/proc`, and command availability vary across Junos OS, Junos OS Evolved, hardware, Routing Engines, releases, and account privileges.
 

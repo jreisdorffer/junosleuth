@@ -21,8 +21,10 @@ PowerShell and Bash collectors are provided for Windows and Unix-like forensic w
 - Existing core-dump acquisition
 - Best-effort `/proc` metadata and memory maps
 - Experimental targeted live-memory acquisition by PID
-- Optional JMRT collection in warn/detection mode
+- Optional Juniper Malware Removal Tool (JMRT) collection in warn/detection mode
 - Final SHA-256 evidence manifest
+
+JMRT is the Juniper Malware Removal Tool. When enabled, Junosleuth records Juniper malware-scan output as evidence and uses warn-only scanning so the collector does not attempt to remove detected files or stop processes.
 
 ## Quick start
 

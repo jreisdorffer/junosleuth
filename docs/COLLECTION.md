@@ -81,7 +81,14 @@ Offline analysis
 Containment/remediation
 ```
 
-JMRT can be included as an independent optional evidence source in warn/detection mode.
+JMRT is the Juniper Malware Removal Tool, exposed on supported platforms through `request system malware-scan`. When enabled, Junosleuth records JMRT as an independent optional evidence source by running:
+
+```text
+request system malware-scan quick-scan clean-action warn
+request system malware-scan integrity-check
+```
+
+The quick scan checks running processes and related executables for known malware signatures; when the executable is unavailable, the Juniper tool may inspect process memory instead. The integrity check reports whether Junos integrity mechanisms are enabled and working. Junosleuth uses `clean-action warn` so JMRT reports findings without deleting files or stopping processes.
 
 ## Collection versus analysis
 
