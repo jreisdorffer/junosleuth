@@ -50,14 +50,77 @@ Existing core files are also discovered and may exceed the normal generic artifa
 ## Evidence layout
 
 ```text
-cli/       analyst-facing Junos output
-shell/     OS-level evidence
-raw/       unmodified SSH stdout
-files/     acquired files/core dumps
-memory/    targeted memory regions
-meta/      manifests, metadata, logs and errors
-SHA256SUMS.txt
+<device>_<utc-timestamp>/
+|-- cli/
+|   |-- 00_platform_version.txt
+|   |-- 01_show_chassis_hardware_detail.txt
+|   |-- 10_show_system_processes_extensive.txt
+|   |-- 20_show_interfaces_terse.txt
+|   |-- 31_configuration_display_set.txt
+|   |-- 40_log_messages.txt
+|   `-- 50_jmrt_quick_scan_warn.txt
+|-- shell/
+|   |-- 60_uname.txt
+|   |-- 63_ps_auxww.txt
+|   |-- 64_netstat_an.txt
+|   |-- 68_writable_dirs_listing.txt
+|   `-- 73_proc_metadata.txt
+|-- raw/
+|   |-- cli/
+|   |   |-- 00_platform_version.raw.txt
+|   |   `-- 40_log_messages.raw.txt
+|   `-- shell/
+|       |-- 60_uname.raw.txt
+|       `-- 73_proc_metadata.raw.txt
+|-- files/
+|   |-- var/
+|   |   |-- log/
+|   |   |   |-- messages
+|   |   |   |-- interactive-commands
+|   |   |   `-- authorization
+|   |   |-- tmp/
+|   |   |-- core/
+|   |   `-- crash/
+|   |-- config/
+|   |-- mfs/
+|   |   `-- var/
+|   |       `-- etc/
+|   |-- root/
+|   |-- home/
+|   `-- usr/
+|       `-- lib/
+|           `-- libjucomm.so.1
+|-- memory/
+|   `-- <pid>/
+|       |-- manifest.txt
+|       |-- process_identity.txt
+|       |-- map_before.txt
+|       |-- map_after.txt
+|       `-- regions/
+|           |-- <start>-<end>.bin
+|           `-- <start>-<end>.stderr
+|-- meta/
+|   |-- manifest.txt
+|   |-- collector.log
+|   |-- login_notice.txt
+|   |-- ssh_stderr.log
+|   |-- remote_file_metadata.txt
+|   |-- remote_file_metadata.stderr
+|   |-- remote_file_candidates.txt
+|   |-- acquired_files_manifest.txt
+|   |-- file_acquisition.log
+|   |-- existing_core_candidates.txt
+|   `-- existing_core_candidates.stderr
+`-- SHA256SUMS.txt
 ```
+
+The `cli/` and `shell/` files are analyst-facing copies. Each file includes collection metadata such as command, remote mode, raw-output path, exit status, semantic status, and SSH-attempt count. The `raw/` tree preserves the original SSH stdout before cleanup.
+
+The `files/` tree mirrors acquired remote paths below the evidence package root. For example, `/var/log/messages` is stored as `files/var/log/messages`.
+
+The `memory/` tree is created when targeted live-memory acquisition is requested. Each PID gets its own directory, memory-map snapshots, process identity output, a per-PID manifest, and one binary file per acquired readable region.
+
+The `meta/` tree contains run metadata, logs, probe output, file-acquisition records, remote filesystem inventory, and error output retained during best-effort collection. Some files and directories appear only when the corresponding option is enabled or the remote platform exposes the relevant data.
 
 ## Recommended workflow
 
