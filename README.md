@@ -113,6 +113,8 @@ Bash requires a Unix-like forensic workstation with OpenSSH and a SHA-256 utilit
 
 Junosleuth is intended for Junos OS and Junos OS Evolved. Actual command, filesystem, shell, `/proc`, and JMRT availability depends on platform, Routing Engine, software release, and account permissions.
 
+See [`SSH-AND-PLATFORM.md`](docs/SSH-AND-PLATFORM.md) for Junos login-class and feature-specific permission guidance.
+
 ## Repository
 
 https://github.com/jreisdorffer/junosleuth
