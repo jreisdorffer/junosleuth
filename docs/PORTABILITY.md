@@ -42,6 +42,8 @@ wget
 
 The collector performs a startup check for `ssh` and a usable SHA-256 implementation. It checks for `scp` only when `--acquire-files` is enabled.
 
+OpenSSH password and key-passphrase prompts are allowed by default. Use `--batch` only when the Bash collector should run unattended with key-based authentication.
+
 ## Target-side commands
 
 Junosleuth uses commands already present on the target platform where available. These vary between traditional Junos and Junos OS Evolved.

@@ -39,6 +39,7 @@ REMOTE_MODE="unknown"
 PLATFORM_FAMILY="unknown"
 SSH_RETRIES=3
 SSH_RETRY_DELAY=1
+BATCH_MODE="no"
 
 usage() {
   cat <<'EOF'
@@ -58,6 +59,7 @@ Options:
                            EXPERIMENTAL: acquire readable memory mappings for
                            comma-separated target PIDs (implies --shell)
       --memory-rate-mbps N Advisory local receive-rate limit (default: 5 MB/s)
+      --batch              Disable SSH password/passphrase prompts for key-only runs
   -h, --help               Show help
 EOF
 }
@@ -73,6 +75,7 @@ while [[ $# -gt 0 ]]; do
     --acquire-files) ACQUIRE_FILES=1; shift ;;
     --acquire-memory) ACQUIRE_MEMORY="${2:-}"; RUN_SHELL=1; shift 2 ;;
     --memory-rate-mbps) MEMORY_RATE_MBPS="${2:-5}"; shift 2 ;;
+    --batch) BATCH_MODE="yes"; shift ;;
     -h|--help) usage; exit 0 ;;
     *) echo "Unknown argument: $1" >&2; usage; exit 2 ;;
   esac
@@ -114,7 +117,7 @@ chmod 700 "$OUT"
 SSH_OPTS=(
   -T
   -p "$PORT"
-  -o BatchMode=yes
+  -o "BatchMode=$BATCH_MODE"
   -o ConnectTimeout=10
   -o ServerAliveInterval=15
   -o ServerAliveCountMax=3
@@ -177,6 +180,10 @@ semantic_status() {
   printf 'ok'
 }
 
+is_ssh_auth_prompt_or_failure() {
+  grep -Eiq '(permission denied|authentication failed|password:|passphrase|read_passphrase|no such identity)' "$@" 2>/dev/null
+}
+
 # Remove only the exact learned common login-notice prefix.
 # Raw output is always kept separately and never modified.
 strip_login_notice() {
@@ -211,6 +218,11 @@ detect_remote_mode() {
   local out err att rc
   out="$OUT/meta/probe_direct.raw"; err="$OUT/meta/probe_direct.stderr"; att="$OUT/meta/.att"
   ssh_raw "show system uptime" "$out" "$err" "$att"; rc=$?
+  if [[ "$rc" -eq 255 ]] && is_ssh_auth_prompt_or_failure "$out" "$err"; then
+    log "ERROR: SSH authentication did not complete during the Junos CLI probe. If the account uses a password or passphrase, run from an interactive terminal or omit --batch."
+    rm -f "$att"
+    return 1
+  fi
   if [[ "$rc" -eq 0 ]] && ! grep -Eqi 'unknown command|command not found|syntax error' "$out"; then
     if grep -Eqi 'Current time|System booted|Protocols started|uptime' "$out"; then
       REMOTE_MODE="cli"; rm -f "$att"; return 0
@@ -219,6 +231,11 @@ detect_remote_mode() {
 
   out="$OUT/meta/probe_shell.raw"; err="$OUT/meta/probe_shell.stderr"
   ssh_raw "cli -c 'show system uptime'" "$out" "$err" "$att"; rc=$?
+  if [[ "$rc" -eq 255 ]] && is_ssh_auth_prompt_or_failure "$out" "$err"; then
+    log "ERROR: SSH authentication did not complete during the Junos shell probe. If the account uses a password or passphrase, run from an interactive terminal or omit --batch."
+    rm -f "$att"
+    return 1
+  fi
   if [[ "$rc" -eq 0 ]] && ! grep -Eqi 'unknown command|command not found|syntax error' "$out"; then
     if grep -Eqi 'Current time|System booted|Protocols started|uptime' "$out"; then
       REMOTE_MODE="shell"; rm -f "$att"; return 0
@@ -346,6 +363,7 @@ collector_user=$(id -un 2>/dev/null || true)
 target=$HOST
 ssh_user=$USER_NAME
 ssh_port=$PORT
+ssh_batch_mode=$BATCH_MODE
 utc_started=$(date -u +%FT%TZ)
 jmrt_enabled=$RUN_JMRT
 shell_enabled=$RUN_SHELL
@@ -466,7 +484,7 @@ if [[ "$ACQUIRE_FILES" -eq 1 ]]; then
     mkdir -p "$(dirname "$dest")"
     rs="$(remote_size "$remote")"; rh="$(remote_hash "$remote")"
 
-    if scp -q -P "$PORT" -o BatchMode=yes -o ConnectTimeout=10 -o StrictHostKeyChecking=ask \
+    if scp -q -P "$PORT" -o "BatchMode=$BATCH_MODE" -o ConnectTimeout=10 -o StrictHostKeyChecking=ask \
       "${USER_NAME}@${HOST}:$remote" "$dest" >>"$OUT/meta/file_acquisition.log" 2>&1; then
       ls="$(wc -c < "$dest" | tr -d ' ')"
       lh="$(host_sha256 "$dest")"

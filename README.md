@@ -34,6 +34,8 @@ JMRT is the Juniper Malware Removal Tool. When enabled, Junosleuth records Junip
 ./junosleuth.sh -H 192.0.2.10 -u iruser -o /secure/evidence
 ```
 
+By default, the Bash collector lets OpenSSH prompt for a password or key passphrase. Use `--batch` only for key-based unattended runs.
+
 Full filesystem/OS collection:
 
 ```bash
@@ -57,6 +59,8 @@ Experimental targeted memory:
 ```powershell
 .\junosleuth.ps1 -HostName 192.0.2.10 -UserName iruser -OutputBase C:\Evidence
 ```
+
+By default, the PowerShell collector lets OpenSSH prompt for a password or key passphrase. Use `-BatchMode` only for key-based unattended runs.
 
 Full filesystem/OS collection:
 
@@ -114,6 +118,8 @@ Bash requires a Unix-like forensic workstation with OpenSSH and a SHA-256 utilit
 Junosleuth is intended for Junos OS and Junos OS Evolved. Actual command, filesystem, shell, `/proc`, and JMRT availability depends on platform, Routing Engine, software release, and account permissions.
 
 See [`SSH-AND-PLATFORM.md`](docs/SSH-AND-PLATFORM.md) for Junos login-class and feature-specific permission guidance.
+
+Project site: https://jreisdorffer.github.io/junosleuth/
 
 ## Repository
 

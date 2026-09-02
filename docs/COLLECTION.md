@@ -285,9 +285,9 @@ memory/<pid>/
 |-- map.stderr
 |-- map_after.txt
 |-- map_after.stderr
-`-- regions/
++-- regions/
     |-- <start>-<end>.bin
-    `-- <start>-<end>.stderr
+    +-- <start>-<end>.stderr
 ```
 
 `process_identity.stderr` is retained by the Bash collector when present. PowerShell records the process identity stdout in `process_identity.txt`.
@@ -320,7 +320,7 @@ The exact package contents depend on selected options, platform support, command
 |   |-- 50_jmrt_quick_scan_warn.txt
 |   |-- 51_jmrt_integrity_check.txt
 |   |-- 80_memory_pre_routing_engine.txt
-|   `-- 87_memory_post_system_memory.txt
+|   +-- 87_memory_post_system_memory.txt
 |-- shell/
 |   |-- 60_uname.txt
 |   |-- 63_ps_auxww.txt
@@ -329,42 +329,42 @@ The exact package contents depend on selected options, platform support, command
 |   |-- 65_sockstat.txt
 |   |-- 65_ip_addr.txt
 |   |-- 68_writable_dirs_listing.txt
-|   `-- 73_proc_metadata.txt
+|   +-- 73_proc_metadata.txt
 |-- raw/
 |   |-- cli/
 |   |   |-- 00_platform_version.raw.txt
 |   |   |-- 40_log_messages.raw.txt
-|   |   `-- 50_jmrt_quick_scan_warn.raw.txt
-|   `-- shell/
+|   |   +-- 50_jmrt_quick_scan_warn.raw.txt
+|   +-- shell/
 |       |-- 60_uname.raw.txt
-|       `-- 73_proc_metadata.raw.txt
+|       +-- 73_proc_metadata.raw.txt
 |-- files/
 |   |-- var/
 |   |   |-- log/
 |   |   |   |-- messages
 |   |   |   |-- interactive-commands
-|   |   |   `-- authorization
+|   |   |   +-- authorization
 |   |   |-- tmp/
 |   |   |-- core/
-|   |   `-- crash/
+|   |   +-- crash/
 |   |-- config/
 |   |-- mfs/
-|   |   `-- var/
-|   |       `-- etc/
+|   |   +-- var/
+|   |       +-- etc/
 |   |-- root/
 |   |-- home/
-|   `-- usr/
-|       `-- lib/
-|           `-- libjucomm.so.1
+|   +-- usr/
+|       +-- lib/
+|           +-- libjucomm.so.1
 |-- memory/
-|   `-- <pid>/
+|   +-- <pid>/
 |       |-- manifest.txt
 |       |-- process_identity.txt
 |       |-- map_before.txt
 |       |-- map_after.txt
-|       `-- regions/
+|       +-- regions/
 |           |-- <start>-<end>.bin
-|           `-- <start>-<end>.stderr
+|           +-- <start>-<end>.stderr
 |-- meta/
 |   |-- manifest.txt
 |   |-- collector.log
@@ -384,8 +384,8 @@ The exact package contents depend on selected options, platform support, command
 |   |-- acquired_files_manifest.txt
 |   |-- file_acquisition.log
 |   |-- existing_core_candidates.txt
-|   `-- existing_core_candidates.stderr
-`-- SHA256SUMS.txt
+|   +-- existing_core_candidates.stderr
++-- SHA256SUMS.txt
 ```
 
 ## Recommended workflow

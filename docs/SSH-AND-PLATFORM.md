@@ -11,6 +11,12 @@ The selected mode is recorded in `meta/manifest.txt` as `remote_mode=cli` or `re
 
 For OS collection from a direct CLI account, `start shell command ...` is used where permissions permit.
 
+## SSH authentication prompts
+
+Junosleuth allows OpenSSH password and key-passphrase prompts by default. This supports Junos accounts that authenticate with a password and then display a message of the day before the collector runs its landing-mode probes.
+
+For key-only automation, use `--batch` with the Bash collector or `-BatchMode` with the PowerShell collector. Batch mode disables interactive SSH prompts and makes authentication failures return quickly.
+
 ## Login notices
 
 Some devices print a login notice on every SSH connection. Junosleuth learns the exact common startup prefix and stores it under `meta/`.

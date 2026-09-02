@@ -36,7 +36,8 @@ param(
     [switch]$RunShell,
     [switch]$AcquireFiles,
     [string]$AcquireMemory = "",
-    [ValidateRange(1,1024)][int]$MemoryRateMBps = 5
+    [ValidateRange(1,1024)][int]$MemoryRateMBps = 5,
+    [switch]$BatchMode
 )
 
 $ErrorActionPreference = "Continue"
@@ -44,6 +45,7 @@ $script:RemoteMode = "unknown"
 $script:PlatformFamily = "unknown"
 $script:SshRetryCount = 3
 $script:SshRetryDelaySeconds = 1
+$script:SshBatchMode = if ($BatchMode.IsPresent) { "yes" } else { "no" }
 if ($AcquireMemory -and $AcquireMemory -notmatch '^\d+(,\d+)*$') { throw "-AcquireMemory expects comma-separated numeric PIDs" }
 
 $script:SshExe = (Get-Command ssh.exe -ErrorAction SilentlyContinue).Source
@@ -85,7 +87,7 @@ function Invoke-SshRaw {
         $errFile = [IO.Path]::GetTempFileName()
 
         & $script:SshExe -T -p $Port `
-            -o BatchMode=yes `
+            -o ("BatchMode={0}" -f $script:SshBatchMode) `
             -o ConnectTimeout=10 `
             -o ServerAliveInterval=15 `
             -o ServerAliveCountMax=3 `
@@ -130,10 +132,18 @@ function Get-SemanticStatus {
     "ok"
 }
 
+function Test-SshAuthPromptOrFailure {
+    param([string]$Stdout,[string]$Stderr)
+    (($Stdout + "`n" + $Stderr) -match '(?im)(permission denied|authentication failed|password:|passphrase|read_passphrase|no such identity)')
+}
+
 function Detect-RemoteMode {
     $direct = Invoke-SshRaw "show system uptime" 2
     [IO.File]::WriteAllText((Join-Path $script:MetaDir "probe_direct.raw"),$direct.Stdout)
     [IO.File]::WriteAllText((Join-Path $script:MetaDir "probe_direct.stderr"),$direct.Stderr)
+    if ($direct.ExitCode -eq 255 -and (Test-SshAuthPromptOrFailure $direct.Stdout $direct.Stderr)) {
+        throw "SSH authentication did not complete during the Junos CLI probe. If the account uses a password or passphrase, run from an interactive terminal or omit -BatchMode."
+    }
     if ($direct.ExitCode -eq 0 -and $direct.Stdout -match '(?im)Current time|System booted|Protocols started|uptime' -and
         $direct.Stdout -notmatch '(?im)unknown command|command not found|syntax error') {
         $script:RemoteMode = "cli"; return
@@ -142,6 +152,9 @@ function Detect-RemoteMode {
     $shell = Invoke-SshRaw "cli -c 'show system uptime'" 2
     [IO.File]::WriteAllText((Join-Path $script:MetaDir "probe_shell.raw"),$shell.Stdout)
     [IO.File]::WriteAllText((Join-Path $script:MetaDir "probe_shell.stderr"),$shell.Stderr)
+    if ($shell.ExitCode -eq 255 -and (Test-SshAuthPromptOrFailure $shell.Stdout $shell.Stderr)) {
+        throw "SSH authentication did not complete during the Junos shell probe. If the account uses a password or passphrase, run from an interactive terminal or omit -BatchMode."
+    }
     if ($shell.ExitCode -eq 0 -and $shell.Stdout -match '(?im)Current time|System booted|Protocols started|uptime' -and
         $shell.Stdout -notmatch '(?im)unknown command|command not found|syntax error') {
         $script:RemoteMode = "shell"; return
@@ -246,6 +259,7 @@ function Invoke-JuniperShell {
     "target=$HostName"
     "ssh_user=$UserName"
     "ssh_port=$Port"
+    "ssh_batch_mode=$script:SshBatchMode"
     "utc_started=$((Get-Date).ToUniversalTime().ToString('yyyy-MM-ddTHH:mm:ssZ'))"
     "jmrt_enabled=$($RunJMRT.IsPresent)"
     "shell_enabled=$([bool]($RunShell -or $AcquireMemory))"
@@ -364,7 +378,7 @@ if ($AcquireFiles) {
         $rh = Get-RemoteSha256 $RemotePath
         $rs = Get-RemoteFileSize $RemotePath
 
-        & scp.exe -q -P $Port -o BatchMode=yes -o ConnectTimeout=10 -o StrictHostKeyChecking=ask `
+        & scp.exe -q -P $Port -o ("BatchMode={0}" -f $script:SshBatchMode) -o ConnectTimeout=10 -o StrictHostKeyChecking=ask `
             "$UserName@$HostName`:$RemotePath" $dest 2>> (Join-Path $script:MetaDir "file_acquisition.log")
         if ($LASTEXITCODE -eq 0 -and (Test-Path $dest)) {
             $lh = (Get-FileHash -Algorithm SHA256 $dest).Hash.ToLowerInvariant()
@@ -426,7 +440,7 @@ function Receive-SshBinary {
     # the account lands in a shell. Direct-CLI mode is wrapped by start shell command.
     $rcmd = Get-RemoteShellCommand $RemoteCommand
     $escaped = $rcmd.Replace('"','\"')
-    $psi.Arguments = "-T -p $Port -o BatchMode=yes -o ConnectTimeout=10 -o ServerAliveInterval=15 -o ServerAliveCountMax=3 -o StrictHostKeyChecking=ask `"$target`" `"$escaped`""
+    $psi.Arguments = "-T -p $Port -o BatchMode=$script:SshBatchMode -o ConnectTimeout=10 -o ServerAliveInterval=15 -o ServerAliveCountMax=3 -o StrictHostKeyChecking=ask `"$target`" `"$escaped`""
     $psi.UseShellExecute = $false
     $psi.RedirectStandardOutput = $true
     $psi.RedirectStandardError = $true
