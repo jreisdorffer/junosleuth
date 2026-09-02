@@ -119,8 +119,6 @@ Junosleuth is intended for Junos OS and Junos OS Evolved. Actual command, filesy
 
 See [`SSH-AND-PLATFORM.md`](docs/SSH-AND-PLATFORM.md) for Junos login-class and feature-specific permission guidance.
 
-Project site: https://jreisdorffer.github.io/junosleuth/
-
 ## Repository
 
 https://github.com/jreisdorffer/junosleuth
